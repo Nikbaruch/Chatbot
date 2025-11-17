@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from openai import OpenAI
@@ -6,7 +6,7 @@ import os
 
 app = FastAPI()
 
-# CORS
+# CORS pour permettre au front de communiquer
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -14,20 +14,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Client OpenAI
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-SITE_PASSWORD = os.getenv("SITE_PASSWORD")  # récupéré depuis Vercel
 
-
-# 🔐 Route de vérification du mot de passe
-@app.post("/auth")
-async def auth(request: Request):
-    data = await request.json()
-    if data.get("password") == SITE_PASSWORD:
-        return {"success": True}
-    return {"success": False}
-
-
-# 🔐 Le frontend est servi SEULEMENT si autorisé
+# Servir index.html à la racine
 @app.get("/")
 def serve_front():
     return FileResponse("index.html")
