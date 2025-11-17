@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mini ChatGPT</title>
+<style>
+  body { font-family: Arial, sans-serif; background: #f0f0f0; padding: 20px; }
+  #chat { max-width: 700px; margin: auto; background: #fff; padding: 20px; border-radius: 10px; height: 70vh; overflow-y: auto; }
+  .message { margin: 10px 0; padding: 10px; border-radius: 5px; }
+  .user { background: #d1e7dd; text-align: right; }
+  .bot { background: #f8d7da; text-align: left; }
+  #input { width: 100%; padding: 10px; margin-top: 10px; }
+</style>
+</head>
+<body>
+<h1>Mini ChatGPT (GPT-5)</h1>
+<div id="chat"></div>
+<input type="text" id="input" placeholder="Écris ton message..." />
+
+<script>
+const chat = document.getElementById('chat');
+const input = document.getElementById('input');
+
+input.addEventListener('keypress', async (e) => {
+  if(e.key === 'Enter' && input.value.trim() !== '') {
+    const userMessage = input.value;
+    appendMessage(userMessage, 'user');
+    input.value = '';
+
+    const res = await fetch('http://localhost:8000/chat', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({message: userMessage})
+    });
+
+    const data = await res.json();
+    appendMessage(data.reply, 'bot');
+    chat.scrollTop = chat.scrollHeight;
+  }
+});
+
+function appendMessage(text, role) {
+  const div = document.createElement('div');
+  div.className = `message ${role}`;
+  div.innerText = text;
+  chat.appendChild(div);
+}
+</script>
+</body>
+</html>
+
+
