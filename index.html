@@ -2,15 +2,15 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Mon Chatbot GPT</title>
+    <title>Chatbot sécurisé</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             background: #f5f5f5;
             margin: 0;
-            padding: 20px;
+            padding: 30px;
         }
-        #chatbox {
+        #login, #chatbox {
             width: 100%;
             max-width: 700px;
             margin: auto;
@@ -18,64 +18,100 @@
             padding: 20px;
             border-radius: 10px;
         }
+        #chatbox { display: none; }
+
+        input, textarea, button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 10px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+        }
+
         .bubble {
             padding: 12px;
             border-radius: 10px;
             margin-bottom: 10px;
         }
-        .user {
-            background: #d0e7ff;
-            text-align: right;
-        }
-        .bot {
-            background: #e9e9e9;
-        }
+        .user { background: #d0e7ff; text-align: right; }
+        .bot { background: #e9e9e9; }
     </style>
 </head>
 <body>
-    <div id="chatbox">
-        <h2>💬 Chatbot GPT-4.1 hébergé sur Vercel</h2>
 
-        <div id="messages"></div>
-
-        <textarea id="input" rows="3" style="width:100%; margin-top:10px;" placeholder="Écris un message..."></textarea>
-        <button onclick="sendMessage()" style="margin-top:10px; padding:10px 20px;">Envoyer</button>
+    <!-- Écran de mot de passe -->
+    <div id="login">
+        <h2>🔐 Accès protégé</h2>
+        <p>Entrez le mot de passe :</p>
+        <input id="password" type="password" placeholder="Mot de passe">
+        <button onclick="checkPassword()">Entrer</button>
+        <p id="error" style="color:red;"></p>
     </div>
 
-    <script>
-        async function sendMessage() {
-            const input = document.getElementById("input");
-            const text = input.value.trim();
-            if (!text) return;
+    <!-- Chatbot -->
+    <div id="chatbox">
+        <h2>💬 Chatbot GPT-4.1</h2>
+        <div id="messages"></div>
+        <textarea id="input" rows="3" placeholder="Écris un message..."></textarea>
+        <button onclick="sendMessage()">Envoyer</button>
+    </div>
 
-            addMessage(text, "user");
-            input.value = "";
+<script>
+    // Vérification du mot de passe
+    async function checkPassword() {
+        const pwd = document.getElementById("password").value;
 
-            const res = await fetch("/chat", {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({message: text})
-            });
+        const res = await fetch("/auth", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({password: pwd})
+        });
 
-            const data = await res.json();
+        const data = await res.json();
 
-            if (data.reply) {
-                addMessage(data.reply, "bot");
-            } else {
-                addMessage("❌ Erreur : " + data.error, "bot");
-            }
+        if (data.success) {
+            document.getElementById("login").style.display = "none";
+            document.getElementById("chatbox").style.display = "block";
+            localStorage.setItem("access", "ok"); // accès persistant
+        } else {
+            document.getElementById("error").textContent = "❌ Mot de passe incorrect";
         }
+    }
 
-        function addMessage(text, type) {
-            const box = document.getElementById("messages");
-            const div = document.createElement("div");
-            div.classList.add("bubble", type);
-            div.textContent = text;
-            box.appendChild(div);
-            box.scrollTop = box.scrollHeight;
-        }
-    </script>
+    // Si déjà connecté
+    if (localStorage.getItem("access") === "ok") {
+        document.getElementById("login").style.display = "none";
+        document.getElementById("chatbox").style.display = "block";
+    }
+
+
+    // Chat
+    async function sendMessage() {
+        const text = document.getElementById("input").value.trim();
+        if (!text) return;
+
+        addMessage(text, "user");
+        document.getElementById("input").value = "";
+
+        const res = await fetch("/chat", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({message: text})
+        });
+
+        const data = await res.json();
+        addMessage(data.reply ?? ("❌ Erreur : " + data.error), "bot");
+    }
+
+    function addMessage(text, type) {
+        const box = document.getElementById("messages");
+        const div = document.createElement("div");
+        div.classList.add("bubble", type);
+        div.textContent = text;
+        box.appendChild(div);
+        box.scrollTop = box.scrollHeight;
+    }
+</script>
+
 </body>
 </html>
-
-
